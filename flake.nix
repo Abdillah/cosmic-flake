@@ -32,7 +32,7 @@
       ];
       rustPlatformFor =
         pkgs:
-        if nixpkgs.lib.versionAtLeast pkgs.rustc.version "1.85.0" then
+        if nixpkgs.lib.versionAtLeast pkgs.rustc.version "1.93.0" then
           pkgs.rustPlatform
         else
           let
