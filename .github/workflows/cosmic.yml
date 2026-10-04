@@ -33,8 +33,9 @@ jobs:
       - run: nix -vL run --show-trace .#update
 
       - id: create-pr
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
+          token: ${{ secrets.GH_TOKEN }}
           branch: update_cosmic_action
           delete-branch: true
           committer: 'github-actions[bot] <github-actions[bot]@users.noreply.github.com>'
