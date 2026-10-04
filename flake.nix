@@ -158,14 +158,14 @@
                           stellarshot
                         ]
                         ++ lib.optionals stdenv.hostPlatform.isx86 [
-                          observatory
+                          cosmic-monitor
                         ];
 
                       environment.sessionVariables = {
                         COSMIC_DATA_CONTROL_ENABLED = "1";
                       };
 
-                      systemd.packages = with pkgs; lib.optionals stdenv.hostPlatform.isx86 [ observatory ];
+                      systemd.packages = with pkgs; lib.optionals stdenv.hostPlatform.isx86 [ cosmic-monitor ];
                       systemd.services.monitord.wantedBy = [ "multi-user.target" ];
 
                       boot.kernelParams = [
