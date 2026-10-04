@@ -23,7 +23,7 @@ jobs:
 
       - uses: cachix/cachix-action@v16
         with:
-          name: cosmic
+          name: cosmic-flake
 
       - name: Configure git
         run: |
