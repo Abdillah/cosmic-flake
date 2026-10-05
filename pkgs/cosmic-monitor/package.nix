@@ -11,18 +11,18 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "cosmic-monitor";
-  version = "1.9.0-unstable-2025-04-04";
+  version = "1.9.0-unstable-2026-10-01";
 
   src = fetchFromGitHub {
     owner = "pop-os";
     repo = "cosmic-monitor";
-    rev = "fdcc323f533137430fa5609a6986daebda2d5741";
-    hash = "sha256-pYBS7pe9si+KzgIHjheYdPQ4mrZM47XV0cD/WM34Xvc=";
+    rev = "be1b79a8bb0ada2c08c421f9466d18000400b7a9";
+    hash = "sha256-c4jlzXonWmf7INES+QcSAgGpjzcVguT1huXRb9XhDsw=";
     fetchSubmodules = true;
   };
 
   useFetchCargoVendor = true;
-  cargoHash = "sha256-oUNAhoJcT1Dlu89d9OgoeKdH6ykLtYFWWI4KbM0ThNY=";
+  cargoHash = "sha256-OM7oNcXuZmdnkdPexTQkHHAN4VxL3wdBqBuZp9vQLG8=";
 
   separateDebugInfo = true;
   __structuredAttrs = true;
