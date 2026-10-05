@@ -1,31 +1,43 @@
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: Lily Foster <lily@lily.flowers>
+# Portions of this code are adapted from nixos-cosmic
+# https://github.com/lilyinstarlight/nixos-cosmic
 {
   lib,
-  fetchFromGitHub,
-  rustPlatform,
-  libcosmicAppHook,
-  bash,
-  just,
   stdenv,
+  rustPlatform,
+  fetchFromGitHub,
+  libcosmicAppHook,
+  just,
+  bash,
   nix-update-script,
+  nixosTests,
 }:
 
-rustPlatform.buildRustPackage {
+rustPlatform.buildRustPackage (finalAttrs: {
   pname = "cosmic-idle";
-  version = "1.0.0-alpha.6-unstable-2025-02-25";
+  version = "1.9.0-unstable-2026-10-05";
 
+  # nixpkgs-update: no auto update
   src = fetchFromGitHub {
     owner = "pop-os";
     repo = "cosmic-idle";
-    rev = "267bb837f127eb805a17250ebcad02db57eb72cb";
-    hash = "sha256-dRvcow+rZ4sJV6pBxRIw6SCmU3aXP9uVKtFEJ9vozzI=";
+    tag = "epoch-${finalAttrs.version}";
+    hash = "sha256-0tcrOfVT5b57ev3b5F2U78F2QPGFwp94bqFVNyKH0Yk=";
   };
 
-  useFetchCargoVendor = true;
-  cargoHash = "sha256-iFR0kFyzawlXrWItzFQbG/tKGd3Snwk/0LYkPzCkJUQ=";
+  postPatch = ''
+    substituteInPlace src/main.rs --replace-fail '"/bin/sh"' '"${lib.getExe' bash "sh"}"'
+  '';
+
+  cargoHash = "sha256-wAjFC6qAC3nllbnZf0KVaZTEztNYo6GTvwcp5FYmXLw=";
+
+  separateDebugInfo = true;
+  __structuredAttrs = true;
 
   nativeBuildInputs = [
-    libcosmicAppHook
     just
+    libcosmicAppHook
   ];
 
   dontUseJustBuild = true;
@@ -36,29 +48,35 @@ rustPlatform.buildRustPackage {
     "prefix"
     (placeholder "out")
     "--set"
-    "bin-src"
-    "target/${stdenv.hostPlatform.rust.cargoShortTarget}/release/cosmic-idle"
+    "cargo-target-dir"
+    "target/${stdenv.hostPlatform.rust.cargoShortTarget}"
   ];
 
-  postPatch = ''
-    substituteInPlace src/main.rs --replace-fail '"/bin/sh"' '"${lib.getExe bash}"'
-  '';
+  passthru = {
+    tests = {
+      inherit (nixosTests)
+        cosmic
+        cosmic-autologin
+        cosmic-noxwayland
+        cosmic-autologin-noxwayland
+        ;
+    };
 
-  passthru.updateScript = nix-update-script {
-    extraArgs = [
-      "--version-regex"
-      "epoch-(.*)"
-    ];
+    updateScript = nix-update-script {
+      extraArgs = [
+        "--version-regex"
+        "epoch-(.*)"
+      ];
+    };
   };
 
   meta = {
-    homepage = "https://github.com/pop-os/cosmic-idle";
     description = "Idle daemon for the COSMIC Desktop Environment";
+    homepage = "https://github.com/pop-os/cosmic-idle";
     license = lib.licenses.gpl3Only;
-    maintainers = with lib.maintainers; [
-      # lilyinstarlight
-    ];
-    platforms = lib.platforms.linux;
     mainProgram = "cosmic-idle";
+    teams = [ lib.teams.cosmic ];
+    platforms = lib.platforms.linux;
+    sourceProvenance = [ lib.sourceTypes.fromSource ];
   };
-}
+})

@@ -1,83 +1,93 @@
 {
   lib,
   fetchFromGitHub,
-  rustPlatform,
   bash,
-  dbus,
+  rustPlatform,
   just,
+  dbus,
   stdenv,
-  xdg-desktop-portal-cosmic,
+  nixosTests,
   nix-update-script,
+  withLogind ? true,
+  withSystemd ? true,
+  withAutostart ? false,
 }:
 
-rustPlatform.buildRustPackage {
+rustPlatform.buildRustPackage (finalAttrs: {
   pname = "cosmic-session";
-  version = "1.0.0-alpha.6-unstable-2025-04-07";
+  version = "1.9.0-unstable-2026-10-05";
 
+  # nixpkgs-update: no auto update
   src = fetchFromGitHub {
     owner = "pop-os";
     repo = "cosmic-session";
-    rev = "37c95bc3aa38ab77736330e0ca33e4283f3886cb";
-    hash = "sha256-uPEjacu1oyUaAdoR8nUz5urj72MdXxCuF+gtNjZkzQ8=";
+    tag = "epoch-${finalAttrs.version}";
+    hash = "sha256-Evl2GxjZZqGCNSfmbmC22+QNRBBl7in0sjmeAqC5cjg=";
   };
-
-  useFetchCargoVendor = true;
-  cargoHash = "sha256-68budhhbt8wPY7sfDqwIs4MWB/NBXsswK6HbC2AnHqE=";
 
   postPatch = ''
     substituteInPlace data/start-cosmic \
-      --replace-fail /usr/bin/cosmic-session "''${!outputBin}/bin/cosmic-session" \
-      --replace-fail /usr/bin/dbus-run-session '${lib.getExe' dbus "dbus-run-session"}' \
-      --replace-fail 'systemctl --user import-environment XDG_SESSION_TYPE XDG_CURRENT_DESKTOP DCONF_PROFILE' '${lib.getExe' dbus "dbus-update-activation-environment"} --systemd PATH XDG_SESSION_CLASS XDG_CONFIG_DIRS XDG_DATA_DIRS XDG_SESSION_DESKTOP XDG_CURRENT_DESKTOP XDG_SESSION_TYPE DCONF_PROFILE XDG_DESKTOP_PORTAL_DIR DISPLAY WAYLAND_DISPLAY XMODIFIERS XCURSOR_SIZE XCURSOR_THEME GDK_PIXBUF_MODULE_FILE GIO_EXTRA_MODULES GTK_IM_MODULE QT_PLUGIN_PATH QT_QPA_PLATFORMTHEME QT_STYLE_OVERRIDE QT_IM_MODULE NIXOS_OZONE_WL &>/dev/null'
+      --replace-fail '/usr/bin/cosmic-session' "$out/bin/cosmic-session" \
+      --replace-fail '/usr/bin/dbus-run-session' "${lib.getBin dbus}/bin/dbus-run-session"
     substituteInPlace data/cosmic.desktop \
-      --replace-fail /usr/bin/start-cosmic "''${!outputBin}/bin/start-cosmic"
+      --replace-fail '/usr/bin/start-cosmic' "$out/bin/start-cosmic"
   '';
 
+  cargoHash = "sha256-IoSLvxpc/1X1a6cDl4ZpoUpxHM7bsH3v2BU6wiQROhM=";
+
+  separateDebugInfo = true;
+  __structuredAttrs = true;
+
+  env.ORCA = "orca"; # get orca from $PATH
+
   nativeBuildInputs = [ just ];
+
   buildInputs = [ bash ];
 
+  buildNoDefaultFeatures = true;
+  buildFeatures =
+    lib.optional withLogind "logind"
+    ++ lib.optional withSystemd "systemd"
+    ++ lib.optional withAutostart "autostart";
   dontUseJustBuild = true;
-  dontUseJustCheck = true;
 
   justFlags = [
     "--set"
     "prefix"
     (placeholder "out")
     "--set"
+    "cosmic_dconf_profile"
+    "${placeholder "out"}/etc/dconf/profile/cosmic"
+    "--set"
     "cargo-target-dir"
     "target/${stdenv.hostPlatform.rust.cargoShortTarget}"
-    "--set"
-    "cosmic_dconf_profile"
-    "cosmic"
   ];
 
-  env.XDP_COSMIC = lib.getExe xdg-desktop-portal-cosmic;
-  # use `orca` from PATH (instead of absolute path) if available
-  env.ORCA = "orca";
-
-  postInstall = ''
-    mkdir -p $out/etc
-    cp -r data/dconf $out/etc/
-  '';
-
   passthru = {
+    providedSessions = [ "cosmic" ];
+    tests = {
+      inherit (nixosTests)
+        cosmic
+        cosmic-autologin
+        cosmic-noxwayland
+        cosmic-autologin-noxwayland
+        ;
+    };
+
     updateScript = nix-update-script {
       extraArgs = [
         "--version-regex"
         "epoch-(.*)"
       ];
     };
-    providedSessions = [ "cosmic" ];
   };
 
   meta = {
     homepage = "https://github.com/pop-os/cosmic-session";
-    description = "Session manager for the COSMIC Desktop Environment";
+    description = "Session manager for the COSMIC desktop environment";
     license = lib.licenses.gpl3Only;
     mainProgram = "cosmic-session";
-    maintainers = with lib.maintainers; [
-      # lilyinstarlight
-    ];
+    teams = [ lib.teams.cosmic ];
     platforms = lib.platforms.linux;
   };
-}
+})

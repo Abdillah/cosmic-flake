@@ -7,29 +7,32 @@
   hicolor-icon-theme,
   nix-update-script,
 }:
-
-stdenvNoCC.mkDerivation {
+stdenvNoCC.mkDerivation (finalAttrs: {
   pname = "cosmic-icons";
-  version = "1.0.0-alpha.6-unstable-2025-03-21";
+  version = "1.9.0-unstable-2026-10-05";
 
+  # nixpkgs-update: no auto update
   src = fetchFromGitHub {
     owner = "pop-os";
     repo = "cosmic-icons";
-    rev = "0b2aed444daa52c65effbb8e71a8a19b0f2e4cb9";
-    hash = "sha256-KDmEYeuiDTYvqg2XJK8pMDfsmROKtN+if5Qxz57H5xs=";
+    tag = "epoch-${finalAttrs.version}";
+    hash = "sha256-IlWVDJZBDn0RZaWpMx+mVJrcn5eqz2i6qDIjvQjkTZ4=";
   };
 
+  __structuredAttrs = true;
+  strictDeps = true;
+
   nativeBuildInputs = [ just ];
+
+  propagatedBuildInputs = [
+    pop-icon-theme
+    hicolor-icon-theme
+  ];
 
   justFlags = [
     "--set"
     "prefix"
     (placeholder "out")
-  ];
-
-  propagatedBuildInputs = [
-    pop-icon-theme
-    hicolor-icon-theme
   ];
 
   dontDropIconThemeCache = true;
@@ -42,12 +45,11 @@ stdenvNoCC.mkDerivation {
   };
 
   meta = {
-    description = "System76 COSMIC icon theme for Linux";
+    description = "System76 Cosmic icon theme for Linux";
     homepage = "https://github.com/pop-os/cosmic-icons";
-    license = lib.licenses.cc-by-sa-40;
-    maintainers = with lib.maintainers; [
-      # lilyinstarlight
+    license = with lib.licenses; [
+      cc-by-sa-40
     ];
-    platforms = lib.platforms.all;
+    teams = [ lib.teams.cosmic ];
   };
-}
+})

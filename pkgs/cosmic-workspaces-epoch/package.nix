@@ -1,61 +1,76 @@
 {
   lib,
+  stdenv,
   rustPlatform,
   fetchFromGitHub,
   libcosmicAppHook,
   pkg-config,
-  libgbm ? null,
   libinput,
-  mesa,
+  libgbm,
   udev,
   nix-update-script,
+  nixosTests,
 }:
 
-rustPlatform.buildRustPackage {
+rustPlatform.buildRustPackage (finalAttrs: {
   pname = "cosmic-workspaces-epoch";
-  version = "1.0.0-alpha.6-unstable-2025-04-08";
+  version = "1.9.0-unstable-2026-10-05";
 
+  # nixpkgs-update: no auto update
   src = fetchFromGitHub {
     owner = "pop-os";
     repo = "cosmic-workspaces-epoch";
-    rev = "076bb981a63da32f0f046b3a025243e4a479eff2";
-    hash = "sha256-yf4blZemyDp8SyijSzPbKD1w0rdFNGEev97dT9W1bkg=";
+    tag = "epoch-${finalAttrs.version}";
+    hash = "sha256-lQxOmO0QklJBripTOeYnUtGqDHrZLha4weSqqhVXLWo=";
   };
 
-  useFetchCargoVendor = true;
-  cargoHash = "sha256-yagg6b1Ry46asZXrhEKl6G9guoSsv0vuo6xIWlUBSFs=";
+  cargoHash = "sha256-0ZvnMT7wkMyZ9zHOBGZNh+DmLaoATHvpSplSnVgC/j4=";
+
+  separateDebugInfo = true;
+  __structuredAttrs = true;
 
   nativeBuildInputs = [
-    libcosmicAppHook
     pkg-config
+    libcosmicAppHook
   ];
+
   buildInputs = [
-    (if libgbm != null then libgbm else mesa)
     libinput
+    libgbm
     udev
   ];
 
-  postInstall = ''
-    mkdir -p $out/share/{applications,icons/hicolor/scalable/apps}
-    cp data/*.desktop $out/share/applications/
-    cp data/*.svg $out/share/icons/hicolor/scalable/apps/
-  '';
+  makeFlags = [
+    "prefix=${placeholder "out"}"
+    "CARGO_TARGET_DIR=target/${stdenv.hostPlatform.rust.cargoShortTarget}"
+  ];
 
-  passthru.updateScript = nix-update-script {
-    extraArgs = [
-      "--version-regex"
-      "epoch-(.*)"
-    ];
+  dontCargoInstall = true;
+
+  passthru = {
+    tests = {
+      inherit (nixosTests)
+        cosmic
+        cosmic-autologin
+        cosmic-noxwayland
+        cosmic-autologin-noxwayland
+        ;
+    };
+
+    updateScript = nix-update-script {
+      extraArgs = [
+        "--version-regex"
+        "epoch-(.*)"
+      ];
+    };
   };
 
   meta = {
     homepage = "https://github.com/pop-os/cosmic-workspaces-epoch";
     description = "Workspaces Epoch for the COSMIC Desktop Environment";
-    license = lib.licenses.gpl3Only;
-    maintainers = with lib.maintainers; [
-      # lilyinstarlight
-    ];
-    platforms = lib.platforms.linux;
     mainProgram = "cosmic-workspaces";
+    license = lib.licenses.gpl3Only;
+    teams = [ lib.teams.cosmic ];
+    platforms = lib.platforms.linux;
   };
-}
+})

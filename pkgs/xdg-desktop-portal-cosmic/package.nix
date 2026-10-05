@@ -3,79 +3,94 @@
   stdenv,
   rustPlatform,
   fetchFromGitHub,
+  glib,
+  just,
   libcosmicAppHook,
-  coreutils,
-  util-linux,
-  libgbm ? null,
-  mesa,
-  pipewire,
   pkg-config,
+  util-linux,
+  libgbm,
+  pipewire,
   gst_all_1,
+  cosmic-wallpapers,
   nix-update-script,
+  nixosTests,
 }:
 
-rustPlatform.buildRustPackage rec {
+rustPlatform.buildRustPackage (finalAttrs: {
   pname = "xdg-desktop-portal-cosmic";
-  version = "1.0.0-alpha.6-unstable-2025-04-08";
+  version = "1.9.0-unstable-2026-10-05";
 
+  # nixpkgs-update: no auto update
   src = fetchFromGitHub {
     owner = "pop-os";
     repo = "xdg-desktop-portal-cosmic";
-    rev = "b655a8ef068390e20740d48f267e9e23b173c198";
-    hash = "sha256-7yfrjKHuYOWPMMkHdGZ+g0hynh2TtSf4h8zW13tTus4=";
+    tag = "epoch-${finalAttrs.version}";
+    hash = "sha256-NBLbaFS+jUjjz8LSDGNksD0Z3WshXlzT3KDRp18g+D4=";
   };
 
-  useFetchCargoVendor = true;
-  cargoHash = "sha256-fOaLeWtrjgBDSShC5OmBZKODNQn4bp/+iPZX5ZMQFqk=";
+  cargoHash = "sha256-PlVydQUtr4zv1S9Co/Xw9RK5uF4Fq4wbB4b55YEiO84=";
 
   separateDebugInfo = true;
 
+  __structuredAttrs = true;
+
   nativeBuildInputs = [
+    just
     libcosmicAppHook
     rustPlatform.bindgenHook
     pkg-config
     util-linux
   ];
+
   buildInputs = [
-    (if libgbm != null then libgbm else mesa)
+    glib
+    libgbm
     pipewire
   ];
+
   checkInputs = [ gst_all_1.gstreamer ];
 
-  env.VERGEN_GIT_SHA = src.rev;
-
-  # TODO: remove when dbus activation for xdg-desktop-portal-cosmic is fixed to properly start it
   postPatch = ''
-    substituteInPlace data/org.freedesktop.impl.portal.desktop.cosmic.service \
-      --replace-fail 'Exec=/bin/false' 'Exec=${lib.getExe' coreutils "true"}'
+    substituteInPlace src/screenshot.rs src/widget/screenshot.rs \
+      --replace-fail '/usr/share/backgrounds' '${cosmic-wallpapers}/share/backgrounds'
   '';
 
-  dontCargoInstall = true;
+  dontUseJustBuild = true;
+  dontUseJustCheck = true;
 
-  makeFlags = [
-    "CARGO_TARGET_DIR=target/${stdenv.hostPlatform.rust.cargoShortTarget}"
-    "prefix=${placeholder "out"}"
+  justFlags = [
+    "--set"
+    "prefix"
+    (placeholder "out")
+    "--set"
+    "cargo-target-dir"
+    "target/${stdenv.hostPlatform.rust.cargoShortTarget}"
   ];
 
-  postInstall = ''
-    mv $out/libexec $out/bin
-  '';
+  passthru = {
+    tests = {
+      inherit (nixosTests)
+        cosmic
+        cosmic-autologin
+        cosmic-noxwayland
+        cosmic-autologin-noxwayland
+        ;
+    };
 
-  passthru.updateScript = nix-update-script {
-    extraArgs = [
-      "--version-regex"
-      "epoch-(.*)"
-    ];
+    updateScript = nix-update-script {
+      extraArgs = [
+        "--version-regex"
+        "epoch-(.*)"
+      ];
+    };
   };
 
   meta = {
     homepage = "https://github.com/pop-os/xdg-desktop-portal-cosmic";
     description = "XDG Desktop Portal for the COSMIC Desktop Environment";
     license = lib.licenses.gpl3Only;
-    maintainers = with lib.maintainers; [
-      # lilyinstarlight
-    ];
+    teams = [ lib.teams.cosmic ];
     mainProgram = "xdg-desktop-portal-cosmic";
     platforms = lib.platforms.linux;
   };
-}
+})

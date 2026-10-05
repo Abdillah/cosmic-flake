@@ -5,23 +5,23 @@
   fetchFromGitHub,
   just,
   libcosmicAppHook,
+  autoAddDriverRunpath,
   nixosTests,
   nix-update-script,
 }:
 
-rustPlatform.buildRustPackage rec {
+rustPlatform.buildRustPackage (finalAttrs: {
   pname = "cosmic-monitor";
-  version = "1.9.0-unstable-2025-04-04";
+  version = "1.9.0-unstable-2026-10-05";
 
+  # nixpkgs-update: no auto update
   src = fetchFromGitHub {
     owner = "pop-os";
     repo = "cosmic-monitor";
-    rev = "fdcc323f533137430fa5609a6986daebda2d5741";
+    tag = "epoch-${finalAttrs.version}";
     hash = "sha256-pYBS7pe9si+KzgIHjheYdPQ4mrZM47XV0cD/WM34Xvc=";
-    fetchSubmodules = true;
   };
 
-  useFetchCargoVendor = true;
   cargoHash = "sha256-oUNAhoJcT1Dlu89d9OgoeKdH6ykLtYFWWI4KbM0ThNY=";
 
   separateDebugInfo = true;
@@ -31,6 +31,7 @@ rustPlatform.buildRustPackage rec {
     just
     libcosmicAppHook
     rustPlatform.bindgenHook
+    autoAddDriverRunpath # for GPU monitoring
   ];
 
   dontUseJustBuild = true;
@@ -71,4 +72,4 @@ rustPlatform.buildRustPackage rec {
     teams = [ lib.teams.cosmic ];
     platforms = lib.platforms.linux;
   };
-}
+})

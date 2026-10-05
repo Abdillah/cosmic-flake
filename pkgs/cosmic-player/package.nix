@@ -1,37 +1,49 @@
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: Lily Foster <lily@lily.flowers>
+# Portions of this code are adapted from nixos-cosmic
+# https://github.com/lilyinstarlight/nixos-cosmic
 {
   lib,
+  stdenv,
   fetchFromGitHub,
   rustPlatform,
   libcosmicAppHook,
+  just,
+  pkg-config,
   alsa-lib,
   ffmpeg,
   glib,
   gst_all_1,
-  just,
-  pkg-config,
-  stdenv,
+  libglvnd,
+  libgbm,
   nix-update-script,
+  nixosTests,
 }:
 
-rustPlatform.buildRustPackage {
+rustPlatform.buildRustPackage (finalAttrs: {
   pname = "cosmic-player";
-  version = "1.0.0-alpha.6-unstable-2025-04-08";
+  version = "1.9.0-unstable-2026-10-05";
 
+  # nixpkgs-update: no auto update
   src = fetchFromGitHub {
     owner = "pop-os";
     repo = "cosmic-player";
-    rev = "0758f527e31e4ac8aa6e3e47693f76d20453105c";
-    hash = "sha256-7FQie5ekE5aV9k0KKaABVMSPbMDIiOlZUxn/YABK+vI=";
+    tag = "epoch-${finalAttrs.version}";
+    hash = "sha256-h5sfUOCboMWoHMFwACWGFtXqiIJA5a1LBDU4oAF57t0=";
   };
 
-  useFetchCargoVendor = true;
-  cargoHash = "sha256-0RrtErTR2J5mn/Lfppk+5X8UUOC2LN65krAq1uz/O4M=";
+  cargoHash = "sha256-9ReitIbvr6D+BGLa1xumi67DPG3YlgdA4pZ/rfvn4Cc=";
+
+  separateDebugInfo = true;
+  __structuredAttrs = true;
+
+  env.VERGEN_GIT_SHA = finalAttrs.src.tag;
 
   nativeBuildInputs = [
-    libcosmicAppHook
-    rustPlatform.bindgenHook
     just
     pkg-config
+    libcosmicAppHook
+    rustPlatform.bindgenHook
   ];
 
   buildInputs = [
@@ -42,6 +54,8 @@ rustPlatform.buildRustPackage {
     gst_all_1.gst-plugins-base
     gst_all_1.gst-plugins-good
     gst_all_1.gst-plugins-bad
+    libgbm
+    libglvnd
   ];
 
   dontUseJustBuild = true;
@@ -52,29 +66,42 @@ rustPlatform.buildRustPackage {
     "prefix"
     (placeholder "out")
     "--set"
-    "bin-src"
-    "target/${stdenv.hostPlatform.rust.cargoShortTarget}/release/cosmic-player"
+    "cargo-target-dir"
+    "target/${stdenv.hostPlatform.rust.cargoShortTarget}"
   ];
 
-  postInstall = ''
+  preFixup = ''
     libcosmicAppWrapperArgs+=(--prefix GST_PLUGIN_SYSTEM_PATH_1_0 : "$GST_PLUGIN_SYSTEM_PATH_1_0")
+
+    substituteInPlace $out/share/thumbnailers/com.system76.CosmicPlayer.thumbnailer \
+      --replace-fail "TryExec=cosmic-player" "TryExec=$out/bin/cosmic-player" \
+      --replace-fail "Exec=cosmic-player" "Exec=$out/bin/cosmic-player"
   '';
 
-  passthru.updateScript = nix-update-script {
-    extraArgs = [
-      "--version-regex"
-      "epoch-(.*)"
-    ];
+  passthru = {
+    tests = {
+      inherit (nixosTests)
+        cosmic
+        cosmic-autologin
+        cosmic-noxwayland
+        cosmic-autologin-noxwayland
+        ;
+    };
+
+    updateScript = nix-update-script {
+      extraArgs = [
+        "--version-regex"
+        "epoch-(.*)"
+      ];
+    };
   };
 
   meta = {
     homepage = "https://github.com/pop-os/cosmic-player";
     description = "Media player for the COSMIC Desktop Environment";
     license = lib.licenses.gpl3Only;
-    maintainers = with lib.maintainers; [
-      # lilyinstarlight
-    ];
+    teams = [ lib.teams.cosmic ];
     platforms = lib.platforms.linux;
     mainProgram = "cosmic-player";
   };
-}
+})

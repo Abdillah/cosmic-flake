@@ -1,38 +1,45 @@
 {
   lib,
-  fetchFromGitHub,
-  libcosmicAppHook,
-  rustPlatform,
-  just,
-  openssl,
-  pkg-config,
   stdenv,
+  rustPlatform,
+  fetchFromGitHub,
+
+  just,
+  pkg-config,
+  makeBinaryWrapper,
+  libcosmicAppHook,
+
+  libxkbcommon,
+  openssl,
+  wayland,
+
   nix-update-script,
 }:
-
-rustPlatform.buildRustPackage rec {
+rustPlatform.buildRustPackage (finalAttrs: {
   pname = "quick-webapps";
-  version = "1.0.2-unstable-2025-03-14";
+  version = "1.0.2-unstable-2026-10-05";
 
   src = fetchFromGitHub {
     owner = "cosmic-utils";
     repo = "web-apps";
-    rev = "054b631aa1426c8e90d3f77f037797c339715cde";
-    hash = "sha256-Vy0O2zptrpixnTRl+CuOijB3VIGHobfJEebASgxJDwk=";
+    tag = finalAttrs.version;
+    hash = "sha256-yd4lALm7eG4NxrvaduZC1SZEE83j/nRsG2ufrfUMJJM=";
   };
 
-  useFetchCargoVendor = true;
-  cargoHash = "sha256-tk3e1lWfoeO6FSc9glw+u2/QlhfyLU0UlRQr2xDX/6g=";
+  cargoHash = "sha256-gg8WCzKbpFT8SRzMxC7ezvv+uN9IpIbGy/yytFC9uaM=";
 
   nativeBuildInputs = [
-    libcosmicAppHook
     just
     pkg-config
+    libcosmicAppHook
   ];
 
   buildInputs = [
+    libxkbcommon
     openssl
   ];
+
+  env.VERGEN_GIT_SHA = finalAttrs.src.tag;
 
   dontUseJustBuild = true;
   dontUseJustCheck = true;
@@ -46,18 +53,14 @@ rustPlatform.buildRustPackage rec {
     "target/${stdenv.hostPlatform.rust.cargoShortTarget}/release/quick-webapps"
   ];
 
-  env.VERGEN_GIT_SHA = src.rev;
-
   passthru.updateScript = nix-update-script { };
 
   meta = {
+    description = "Web App Manager for the COSMIC desktop";
     homepage = "https://github.com/cosmic-utils/web-apps";
-    description = "Web app manager for the COSMIC Desktop Environment";
     license = lib.licenses.gpl3Only;
-    maintainers = with lib.maintainers; [
-      # lilyinstarlight
-    ];
     platforms = lib.platforms.linux;
+    maintainers = with lib.maintainers; [ pluiedev ];
     mainProgram = "quick-webapps";
   };
-}
+})

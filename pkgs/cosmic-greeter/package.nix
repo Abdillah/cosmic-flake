@@ -1,46 +1,76 @@
 {
   lib,
+  stdenv,
   fetchFromGitHub,
   rustPlatform,
   libcosmicAppHook,
   cmake,
-  coreutils,
   just,
+  cosmic-randr,
+  dav1d,
   libinput,
   linux-pam,
-  stdenv,
   udev,
+  coreutils,
   xkeyboard_config,
   nix-update-script,
+  nixosTests,
+  orca,
+  withLogind ? true,
+  withSystemd ? true,
+  withUpower ? true,
+  withNetworkManager ? true,
 }:
 
-rustPlatform.buildRustPackage rec {
+rustPlatform.buildRustPackage (finalAttrs: {
   pname = "cosmic-greeter";
-  version = "1.0.0-alpha.6-unstable-2025-04-08";
+  version = "1.9.1-unstable-2026-10-05";
 
+  # nixpkgs-update: no auto update
   src = fetchFromGitHub {
     owner = "pop-os";
     repo = "cosmic-greeter";
-    rev = "2d2543094e04ae3167f71a5986626f03663beb79";
-    hash = "sha256-TdqmtQWGDQSn0SN9VnFzb5SUG9STFZig9czo/ZJdleg=";
+    tag = "epoch-${finalAttrs.version}";
+    hash = "sha256-XKktgBfv6oWOiEPUOkNDTEZruROxGZelDZiCwmP9DAc=";
   };
 
-  useFetchCargoVendor = true;
-  cargoHash = "sha256-1s1iWKiHaBWAPi6lZoYRvsHlptQqPDhASBMqdT0FdGY=";
+  postPatch = ''
+    substituteInPlace src/greeter.rs --replace-fail '/usr/bin/env' '${lib.getExe' coreutils "env"}'
+    substituteInPlace src/greeter.rs --replace-fail '/usr/bin/orca' '${lib.getExe orca}'
+  '';
+
+  cargoHash = "sha256-/yIwqJXQD8mZwWwSI2gcYklnVjy/47Dl5O8mPEKPqTA=";
+
+  buildNoDefaultFeatures = true;
+
+  cargoBuildFlags = [ "--workspace" ];
+
+  buildFeatures =
+    lib.optionals withLogind [ "logind" ]
+    ++ lib.optionals withSystemd [ "systemd" ]
+    ++ lib.optionals withUpower [ "upower" ]
+    ++ lib.optionals withNetworkManager [ "networkmanager" ];
+
+  separateDebugInfo = true;
+  __structuredAttrs = true;
+
+  env.VERGEN_GIT_SHA = finalAttrs.src.tag;
 
   nativeBuildInputs = [
-    libcosmicAppHook
     rustPlatform.bindgenHook
     cmake
     just
+    libcosmicAppHook
   ];
+
   buildInputs = [
+    cosmic-randr
+    dav1d
     libinput
     linux-pam
     udev
+    orca
   ];
-
-  cargoBuildFlags = [ "--all" ];
 
   dontUseJustBuild = true;
   dontUseJustCheck = true;
@@ -50,39 +80,42 @@ rustPlatform.buildRustPackage rec {
     "prefix"
     (placeholder "out")
     "--set"
-    "bin-src"
-    "target/${stdenv.hostPlatform.rust.cargoShortTarget}/release/cosmic-greeter"
-    "--set"
-    "daemon-src"
-    "target/${stdenv.hostPlatform.rust.cargoShortTarget}/release/cosmic-greeter-daemon"
+    "cargo-target-dir"
+    "target/${stdenv.hostPlatform.rust.cargoShortTarget}"
   ];
 
-  env.VERGEN_GIT_SHA = src.rev;
-
-  postPatch = ''
-    substituteInPlace src/greeter.rs --replace-fail '/usr/bin/env' '${lib.getExe' coreutils "env"}'
+  preFixup = ''
+    libcosmicAppWrapperArgs+=(
+      --prefix PATH : ${lib.makeBinPath [ cosmic-randr ]}
+      --set-default X11_BASE_RULES_XML ${xkeyboard_config}/share/X11/xkb/rules/base.xml
+      --set-default X11_BASE_EXTRA_RULES_XML ${xkeyboard_config}/share/X11/xkb/rules/extra.xml
+    )
   '';
 
-  postInstall = ''
-    libcosmicAppWrapperArgs+=(--set-default X11_BASE_RULES_XML ${xkeyboard_config}/share/X11/xkb/rules/base.xml)
-    libcosmicAppWrapperArgs+=(--set-default X11_EXTRA_RULES_XML ${xkeyboard_config}/share/X11/xkb/rules/base.extras.xml)
-  '';
+  passthru = {
+    tests = {
+      inherit (nixosTests)
+        cosmic
+        cosmic-autologin
+        cosmic-noxwayland
+        cosmic-autologin-noxwayland
+        ;
+    };
 
-  passthru.updateScript = nix-update-script {
-    extraArgs = [
-      "--version-regex"
-      "epoch-(.*)"
-    ];
+    updateScript = nix-update-script {
+      extraArgs = [
+        "--version-regex"
+        "epoch-(.*)"
+      ];
+    };
   };
 
   meta = {
     homepage = "https://github.com/pop-os/cosmic-greeter";
     description = "Greeter for the COSMIC Desktop Environment";
-    license = lib.licenses.gpl3Only;
-    maintainers = with lib.maintainers; [
-      # lilyinstarlight
-    ];
-    platforms = lib.platforms.linux;
     mainProgram = "cosmic-greeter";
+    license = lib.licenses.gpl3Only;
+    teams = [ lib.teams.cosmic ];
+    platforms = lib.platforms.linux;
   };
-}
+})

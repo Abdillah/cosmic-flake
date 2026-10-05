@@ -1,39 +1,37 @@
 {
-  lib,
-  fetchFromGitHub,
+  stdenv,
   rustPlatform,
-  bash,
-  fd,
+  fetchFromGitHub,
+  lib,
   just,
+  pkg-config,
+  fd,
   libqalculate,
   libxkbcommon,
-  pkg-config,
-  stdenv,
-  nix-update-script,
 }:
 
-rustPlatform.buildRustPackage {
+rustPlatform.buildRustPackage (finalAttrs: {
   pname = "pop-launcher";
-  version = "1.2.4-unstable-2025-03-24";
+  version = "1.2.7-unstable-2026-10-05";
 
   src = fetchFromGitHub {
     owner = "pop-os";
     repo = "launcher";
-    rev = "58a8f2db649098463b183c09cfa5897db217e2cf";
-    hash = "sha256-v8py/IgbUuV52v9WsAYTszupwho32O8NohipviOiQoY=";
+    tag = finalAttrs.version;
+    hash = "sha256-Db3Lj1GuhoEP2iMwgEF8HnGAUkz0IIr3ZQWmNd1EaOY=";
   };
 
-  useFetchCargoVendor = true;
-  cargoHash = "sha256-MLh6gI8Kfio655Df+o58/8aAJNxoT51feHvkjtPgPrU=";
+  __structuredAttrs = true;
 
   nativeBuildInputs = [
     just
     pkg-config
   ];
   buildInputs = [
-    bash
     libxkbcommon
   ];
+
+  cargoHash = "sha256-9gYfQQQd/W3QQFavbLiJVFQDs0dkZtHDm3xNXZPzhLc=";
 
   cargoBuildFlags = [
     "--package"
@@ -46,7 +44,6 @@ rustPlatform.buildRustPackage {
 
   dontUseJustBuild = true;
   dontUseJustCheck = true;
-
   justFlags = [
     "--set"
     "base-dir"
@@ -57,35 +54,27 @@ rustPlatform.buildRustPackage {
   ];
 
   postPatch = ''
+    substituteInPlace justfile --replace-fail '#!/usr/bin/env' "#!$(command -v env)"
+
     substituteInPlace src/lib.rs \
-      --replace-fail '/usr/lib/pop-launcher' "$out/share/pop-launcher"
+        --replace-fail '/usr/lib/pop-launcher' "$out/share/pop-launcher"
     substituteInPlace plugins/src/scripts/mod.rs \
-      --replace-fail '/usr/lib/pop-launcher' "$out/share/pop-launcher"
+        --replace-fail '/usr/lib/pop-launcher' "$out/share/pop-launcher"
     substituteInPlace plugins/src/calc/mod.rs \
-      --replace-fail 'Command::new("qalc")' 'Command::new("${lib.getExe libqalculate}")'
+        --replace-fail 'Command::new("qalc")' 'Command::new("${libqalculate}/bin/qalc")'
     substituteInPlace plugins/src/find/mod.rs \
-      --replace-fail 'spawn("fd")' 'spawn("${lib.getExe fd}")'
+        --replace-fail 'spawn("fd")' 'spawn("${fd}/bin/fd")'
     substituteInPlace plugins/src/terminal/mod.rs \
-      --replace-fail '/usr/bin/gnome-terminal' 'gnome-terminal'
-
-    substituteInPlace justfile \
-      --replace-fail '#!/usr/bin/env sh' "#!$SHELL"
+        --replace-fail '/usr/bin/gnome-terminal' 'gnome-terminal'
   '';
-
-  postInstall = ''
-    chmod +x $out/share/pop-launcher/scripts/**/*.sh
-  '';
-
-  passthru.updateScript = nix-update-script { };
 
   meta = {
     description = "Modular IPC-based desktop launcher service";
     homepage = "https://github.com/pop-os/launcher";
-    license = lib.licenses.mpl20;
-    maintainers = with lib.maintainers; [
-      # lilyinstarlight
-    ];
     platforms = lib.platforms.linux;
+    license = lib.licenses.mpl20;
+    maintainers = with lib.maintainers; [ samhug ];
     mainProgram = "pop-launcher";
+    teams = [ lib.teams.cosmic ];
   };
-}
+})

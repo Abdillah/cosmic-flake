@@ -1,48 +1,41 @@
 {
   lib,
+  stdenv,
   fetchFromGitHub,
   rustPlatform,
-  libcosmicAppHook,
-  stdenv,
-  glib,
   just,
+  libcosmicAppHook,
+  glib,
   nix-update-script,
+  nixosTests,
 }:
 
-rustPlatform.buildRustPackage rec {
+rustPlatform.buildRustPackage (finalAttrs: {
   pname = "cosmic-files";
-  version = "1.0.0-alpha.6-unstable-2025-04-08";
+  version = "1.9.0-unstable-2026-10-05";
 
+  # nixpkgs-update: no auto update
   src = fetchFromGitHub {
     owner = "pop-os";
     repo = "cosmic-files";
-    rev = "7a657c646b05715ea1c36cd74025173652789389";
-    hash = "sha256-Jp8u43hJWsGXLd82jdD9BWlVA3fGBQ4kCoIbKQNHL0o=";
+    tag = "epoch-${finalAttrs.version}";
+    hash = "sha256-QtCiyTkPPnN2fWTlX0y4Pxn43sn3djYN9IIv+O9ihKs=";
   };
 
-  useFetchCargoVendor = true;
-  cargoHash = "sha256-xelN1sBGOwt6QmPHekH7IeTw2GEoz1Gana4KCPTO0lI=";
+  cargoHash = "sha256-cqDRvByVLR3pcoTvQUeEjtAx+E2NSJQoZRlp6jOkfoI=";
+
+  separateDebugInfo = true;
+  __structuredAttrs = true;
+
+  env.VERGEN_GIT_SHA = finalAttrs.src.tag;
 
   nativeBuildInputs = [
-    libcosmicAppHook
     just
+    libcosmicAppHook
+    rustPlatform.bindgenHook
   ];
-  buildInputs = [ glib ];
 
-  # TODO: uncomment and remove phases below if these packages can ever be built at the same time
-  # NOTE: this causes issues with the desktop instance linking to a window tab when cosmic-files is opened, see <https://github.com/lilyinstarlight/nixos-cosmic/issues/591>
-  #cargoBuildFlags = [
-  #  "--package"
-  #  "cosmic-files"
-  #  "--package"
-  #  "cosmic-files-applet"
-  #];
-  # cargoTestFlags = [
-  #  "--package"
-  #  "cosmic-files"
-  #  "--package"
-  #  "cosmic-files-applet"
-  # ];
+  buildInputs = [ glib ];
 
   dontUseJustBuild = true;
   dontUseJustCheck = true;
@@ -52,47 +45,70 @@ rustPlatform.buildRustPackage rec {
     "prefix"
     (placeholder "out")
     "--set"
-    "bin-src"
-    "target/${stdenv.hostPlatform.rust.cargoShortTarget}/release/cosmic-files"
-    "--set"
-    "applet-src"
-    "target/${stdenv.hostPlatform.rust.cargoShortTarget}/release/cosmic-files-applet"
+    "cargo-target-dir"
+    "target/${stdenv.hostPlatform.rust.cargoShortTarget}"
   ];
 
-  env.VERGEN_GIT_SHA = src.rev;
-
-  # TODO: remove next two phases if these packages can ever be built at the same time
+  # This is needed since by setting cargoBuildFlags, it would build both the applet and the main binary
+  # at the same time, which would cause problems with the desktop items applet
   buildPhase = ''
-    baseCargoBuildFlags="$cargoBuildFlags"
-    cargoBuildFlags="$baseCargoBuildFlags --package cosmic-files"
+    runHook preBuild
+
+    defaultCargoBuildFlags="$cargoBuildFlags"
+
+    cargoBuildFlags="$defaultCargoBuildFlags --package cosmic-files"
     runHook cargoBuildHook
-    cargoBuildFlags="$baseCargoBuildFlags --package cosmic-files-applet"
+
+    cargoBuildFlags="$defaultCargoBuildFlags --package cosmic-files-thumbnailer"
     runHook cargoBuildHook
+
+    cargoBuildFlags="$defaultCargoBuildFlags --package cosmic-files-applet"
+    runHook cargoBuildHook
+
+    runHook postBuild
   '';
 
   checkPhase = ''
-    baseCargoTestFlags="$cargoTestFlags"
-    cargoTestFlags="$baseCargoTestFlags --package cosmic-files"
+    runHook preCheck
+
+    defaultCargoTestFlags="$cargoTestFlags"
+
+    cargoTestFlags="$defaultCargoTestFlags --package cosmic-files"
     runHook cargoCheckHook
-    cargoTestFlags="$baseCargoTestFlags --package cosmic-files-applet"
+
+    cargoTestFlags="$defaultCargoTestFlags --package cosmic-files-thumbnailer"
     runHook cargoCheckHook
+
+    cargoTestFlags="$defaultCargoTestFlags --package cosmic-files-applet"
+    runHook cargoCheckHook
+
+    runHook postCheck
   '';
 
-  passthru.updateScript = nix-update-script {
-    extraArgs = [
-      "--version-regex"
-      "epoch-(.*)"
-    ];
+  passthru = {
+    tests = {
+      inherit (nixosTests)
+        cosmic
+        cosmic-autologin
+        cosmic-noxwayland
+        cosmic-autologin-noxwayland
+        ;
+    };
+
+    updateScript = nix-update-script {
+      extraArgs = [
+        "--version-regex"
+        "epoch-(.*)"
+      ];
+    };
   };
 
   meta = {
     homepage = "https://github.com/pop-os/cosmic-files";
     description = "File Manager for the COSMIC Desktop Environment";
     license = lib.licenses.gpl3Only;
-    maintainers = with lib.maintainers; [
-      # lilyinstarlight
-    ];
-    platforms = lib.platforms.linux;
     mainProgram = "cosmic-files";
+    teams = [ lib.teams.cosmic ];
+    platforms = lib.platforms.linux;
   };
-}
+})

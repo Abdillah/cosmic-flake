@@ -1,29 +1,30 @@
 {
   lib,
+  stdenv,
+  rustPlatform,
   fetchFromGitHub,
   libcosmicAppHook,
-  rustPlatform,
   just,
   libsecret,
   openssl,
   sqlite,
-  stdenv,
   nix-update-script,
 }:
 
-rustPlatform.buildRustPackage {
+rustPlatform.buildRustPackage (finalAttrs: {
   pname = "tasks";
-  version = "0.1.1-unstable-2025-03-10";
+  version = "0.3.1-unstable-2026-10-05";
+
+  __structuredAttrs = true;
 
   src = fetchFromGitHub {
     owner = "cosmic-utils";
     repo = "tasks";
-    rev = "837496c5044b29c05bd993855bf02cb9a0d2b2fa";
-    hash = "sha256-Wu0ddiToFJzD25DSveteQhFwC25CeIUT00jNt1JK/c8=";
+    tag = finalAttrs.version;
+    hash = "sha256-gW9e+iYscJgwBdFf7QmYjnydUxrfAuS4VAoVce24eyk=";
   };
 
-  useFetchCargoVendor = true;
-  cargoHash = "sha256-zW10eDBTGdir5Tj3pvfpjy6CYyK0G1fXSi6ucrU0D6k=";
+  cargoHash = "sha256-Ztgdtr91KvS5BssB3Sd6Z9HcZajyLZe7FYbzuF4uNXc=";
 
   nativeBuildInputs = [
     libcosmicAppHook
@@ -48,16 +49,20 @@ rustPlatform.buildRustPackage {
     "target/${stdenv.hostPlatform.rust.cargoShortTarget}/release/tasks"
   ];
 
-  passthru.updateScript = nix-update-script { };
+  passthru = {
+    updateScript = nix-update-script { };
+  };
 
   meta = {
+    changelog = "https://github.com/cosmic-utils/tasks/releases/tag/${finalAttrs.version}";
+    description = "Simple task management application for the COSMIC desktop";
     homepage = "https://github.com/cosmic-utils/tasks";
-    description = "Simple task management application for the COSMIC Desktop Environment";
     license = lib.licenses.gpl3Only;
     maintainers = with lib.maintainers; [
-      # lilyinstarlight
+      GaetanLepage
+      HeitorAugustoLN
     ];
     platforms = lib.platforms.linux;
     mainProgram = "tasks";
   };
-}
+})

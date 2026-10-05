@@ -1,26 +1,30 @@
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: Lily Foster <lily@lily.flowers>
+# Portions of this code are adapted from nixos-cosmic
+# https://github.com/lilyinstarlight/nixos-cosmic
 {
   lib,
+  stdenv,
+  rustPlatform,
   fetchFromGitHub,
   libcosmicAppHook,
-  rustPlatform,
+  libqalculate,
   just,
-  stdenv,
   nix-update-script,
+  fetchpatch,
 }:
-
-rustPlatform.buildRustPackage {
+rustPlatform.buildRustPackage (finalAttrs: {
   pname = "cosmic-ext-calculator";
-  version = "0.1.1-unstable-2025-03-10";
+  version = "0.2.1-unstable-2026-10-05";
 
   src = fetchFromGitHub {
     owner = "cosmic-utils";
     repo = "calculator";
-    rev = "267687ea2fecebad42b10757ec0296118b80660b";
-    hash = "sha256-ZatiNMH8uK6pMXWer7T9IHRB8Gd5Cw0IXVWWCGvNLv0=";
+    tag = finalAttrs.version;
+    hash = "sha256-t8xuM0B2eh2AbAhDgSOGapTwmmm9eC+wHsqwq4Jn5yU=";
   };
 
-  useFetchCargoVendor = true;
-  cargoHash = "sha256-HVe/Ry6dvG1VSKQyND5yqhB6YAS3+eRvwyXCsaQQXww=";
+  cargoHash = "sha256-a4WckNyKXS71dT0uYbO7tUUmD0Dw8vSzrPp29O4aiAk=";
 
   nativeBuildInputs = [
     libcosmicAppHook
@@ -39,16 +43,22 @@ rustPlatform.buildRustPackage {
     "target/${stdenv.hostPlatform.rust.cargoShortTarget}/release/cosmic-ext-calculator"
   ];
 
+  preFixup = ''
+    libcosmicAppWrapperArgs+=(
+      --prefix PATH : ${lib.makeBinPath [ libqalculate ]}
+    )
+  '';
+
   passthru.updateScript = nix-update-script { };
 
   meta = {
-    homepage = "https://github.com/cosmic-utils/calculator";
+    changelog = "https://github.com/cosmic-utils/calculator/releases/tag/${finalAttrs.version}";
     description = "Calculator for the COSMIC Desktop Environment";
+    homepage = "https://github.com/cosmic-utils/calculator";
     license = lib.licenses.gpl3Only;
-    maintainers = with lib.maintainers; [
-      # lilyinstarlight
-    ];
-    platforms = lib.platforms.linux;
     mainProgram = "cosmic-ext-calculator";
+    maintainers = with lib.maintainers; [ HeitorAugustoLN ];
+    platforms = lib.platforms.linux;
+    sourceProvenance = [ lib.sourceTypes.fromSource ];
   };
-}
+})

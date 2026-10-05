@@ -1,34 +1,37 @@
 {
   lib,
-  fetchFromGitHub,
   rustPlatform,
+  fetchFromGitHub,
+  versionCheckHook,
   nix-update-script,
+  cosmic-comp,
 }:
-
-rustPlatform.buildRustPackage {
+rustPlatform.buildRustPackage (finalAttrs: {
   pname = "cosmic-ext-ctl";
-  version = "1.1.0-unstable-2025-01-10";
+  version = "1.5.0-unstable-2026-10-05";
 
   src = fetchFromGitHub {
     owner = "cosmic-utils";
     repo = "cosmic-ctl";
-    rev = "35145e808f3d7e895057befde75c87c3f70516cd";
-    hash = "sha256-0fGt9S9U6eOZflc6kzixQFiTC96vZtauQ9tQJhdYoFc=";
+    tag = "v${finalAttrs.version}";
+    hash = "sha256-URqNhkC1XrXYxr14K6sT3TLso38eWLMA+WplBdj52Vg=";
   };
 
-  useFetchCargoVendor = true;
-  cargoHash = "sha256-EReo2hkBaIO1YOBx4D9rQSXlx+3NK5VQtj59jfZZI/0=";
+  cargoHash = "sha256-OL1LqOAyIFFCGIp3ySdvEXJ1ECp9DgC/8mfAPo/E7k4=";
+
+  doInstallCheck = true;
+  nativeInstallCheckInputs = [ versionCheckHook ];
+  versionCheckProgram = "${placeholder "out"}/bin/cosmic-ctl";
 
   passthru.updateScript = nix-update-script { };
 
   meta = {
-    description = "CLI for COSMIC Desktop Environment configuration management";
+    description = "CLI for COSMIC Desktop configuration management";
+    changelog = "https://github.com/cosmic-utils/cosmic-ctl/releases/tag/v${finalAttrs.version}";
     homepage = "https://github.com/cosmic-utils/cosmic-ctl";
     license = lib.licenses.gpl3Only;
-    maintainers = with lib.maintainers; [
-      # lilyinstarlight
-    ];
-    platforms = lib.platforms.linux;
+    maintainers = with lib.maintainers; [ HeitorAugustoLN ];
     mainProgram = "cosmic-ctl";
+    inherit (cosmic-comp.meta) platforms;
   };
-}
+})

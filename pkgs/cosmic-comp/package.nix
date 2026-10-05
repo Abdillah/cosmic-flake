@@ -1,82 +1,100 @@
 {
   lib,
-  fetchFromGitHub,
-  rustPlatform,
-  libcosmicAppHook,
-  libdisplay-info,
-  libgbm ? null,
-  libinput,
-  mesa,
-  pixman,
-  pkg-config,
-  seatd,
   stdenv,
+  rustPlatform,
+  fetchFromGitHub,
+  libcosmicAppHook,
+  pkg-config,
+  libdisplay-info_0_3,
+  libgbm,
+  libinput,
+  pixman,
+  seatd,
   udev,
-  xwayland,
-  useXWayland ? true,
   systemd,
-  useSystemd ? lib.meta.availableOn stdenv.hostPlatform systemd,
+  xrdb,
   nix-update-script,
+  nixosTests,
+
+  useSystemd ? lib.meta.availableOn stdenv.hostPlatform systemd,
+  withXWayland ? true,
 }:
 
-rustPlatform.buildRustPackage {
+rustPlatform.buildRustPackage (finalAttrs: {
   pname = "cosmic-comp";
-  version = "1.0.0-alpha.6-unstable-2025-04-04";
+  version = "1.9.0-unstable-2026-10-05";
 
+  # nixpkgs-update: no auto update
   src = fetchFromGitHub {
     owner = "pop-os";
     repo = "cosmic-comp";
-    rev = "99bbd10168aed50a24db730cf20eb778e072c5e4";
-    hash = "sha256-Xow6kUtWQGFcIIXgiYQlfm5b9Ibqg5IxD+kmVRIbBvE=";
+    tag = "epoch-${finalAttrs.version}";
+    hash = "sha256-/q2SDp9Sa2MG4bMtryOizxnhPovrAgYb9GXQ35NRs6c=";
   };
 
-  useFetchCargoVendor = true;
-  cargoHash = "sha256-8/LBIGQjrgofpQ27COpm0C0Pe4bOZNqNpGcV/IYQLLc=";
+  cargoHash = "sha256-WTpJuj3Xz9hHLj+kuhys0Fr8FmosAuXpbtNSK3Y5twU=";
+
+  # Only default feature is systemd
+  buildNoDefaultFeatures = !useSystemd;
 
   separateDebugInfo = true;
+  __structuredAttrs = true;
 
   nativeBuildInputs = [
     libcosmicAppHook
     pkg-config
   ];
+
   buildInputs = [
-    libdisplay-info
-    (if libgbm != null then libgbm else mesa)
+    libdisplay-info_0_3
+    libgbm
     libinput
     pixman
     seatd
     udev
-  ] ++ lib.optional useSystemd systemd;
-
-  # only default feature is systemd
-  buildNoDefaultFeatures = !useSystemd;
-
-  dontCargoInstall = true;
+  ]
+  ++ lib.optional useSystemd systemd;
 
   makeFlags = [
     "prefix=${placeholder "out"}"
     "CARGO_TARGET_DIR=target/${stdenv.hostPlatform.rust.cargoShortTarget}"
   ];
 
-  preFixup = lib.optionalString useXWayland ''
-    libcosmicAppWrapperArgs+=(--prefix PATH : ${lib.makeBinPath [ xwayland ]})
+  dontCargoInstall = true;
+
+  # With Xwayland, cosmic-comp calls out to `xrdb -merge` to set
+  # `Xcursor.size` and `Xcursor.theme` for X11 clients (src/xwayland.rs,
+  # upstream pop-os/cosmic-comp#1976). Without it on PATH it logs
+  # "`xrdb` not found, cannot update Xresources." and X11 clients fall back
+  # to libXcursor's screen-derived default cursor size.
+  preFixup = lib.optionalString withXWayland ''
+    libcosmicAppWrapperArgs+=(--prefix PATH : ${lib.makeBinPath [ xrdb ]})
   '';
 
-  passthru.updateScript = nix-update-script {
-    extraArgs = [
-      "--version-regex"
-      "epoch-(.*)"
-    ];
+  passthru = {
+    tests = {
+      inherit (nixosTests)
+        cosmic
+        cosmic-autologin
+        cosmic-noxwayland
+        cosmic-autologin-noxwayland
+        ;
+    };
+
+    updateScript = nix-update-script {
+      extraArgs = [
+        "--version-regex"
+        "epoch-(.*)"
+      ];
+    };
   };
 
   meta = {
     homepage = "https://github.com/pop-os/cosmic-comp";
     description = "Compositor for the COSMIC Desktop Environment";
-    license = lib.licenses.gpl3Only;
-    maintainers = with lib.maintainers; [
-      # lilyinstarlight
-    ];
-    platforms = lib.platforms.linux;
     mainProgram = "cosmic-comp";
+    license = lib.licenses.gpl3Only;
+    teams = [ lib.teams.cosmic ];
+    platforms = lib.platforms.linux;
   };
-}
+})

@@ -1,28 +1,26 @@
 {
   lib,
-  fetchFromGitHub,
+  stdenv,
   rustPlatform,
+  fetchFromGitHub,
   libcosmicAppHook,
   just,
-  stdenv,
-  nix-update-script,
   pkg-config,
   udev,
+  nix-update-script,
 }:
-
 rustPlatform.buildRustPackage {
   pname = "cosmic-ext-applet-external-monitor-brightness";
-  version = "0-unstable-2024-07-04";
+  version = "0.0.1-unstable-2026-02-15-unstable-2026-10-05";
 
   src = fetchFromGitHub {
-    owner = "maciekk64";
+    owner = "cosmic-utils";
     repo = "cosmic-ext-applet-external-monitor-brightness";
-    rev = "13b212dff8bc3f4796150d52486f8aacec83b465";
-    hash = "sha256-IncYmqAZjocSSxw+5wemKjEYWfp/0YfXvHTv2rYLdSs=";
+    rev = "f84c46dfa89c369484cc616d15485ae1bf257803";
+    hash = "sha256-uEoLhVIv25KNoDD28HIIMutxR2nv+AIapSRlz+ETGuQ=";
   };
 
-  useFetchCargoVendor = true;
-  cargoHash = "sha256-kOK4Ndk2vLRucZ318doiYsYEzh5ugUaj23OQ48WRwh0=";
+  cargoHash = "sha256-ou7iukl1pHMfcJNemwLdZYYxugbJJQ53XpCYowUTj90=";
 
   nativeBuildInputs = [
     libcosmicAppHook
@@ -30,9 +28,7 @@ rustPlatform.buildRustPackage {
     pkg-config
   ];
 
-  buildInputs = [
-    udev
-  ];
+  buildInputs = [ udev ];
 
   dontUseJustBuild = true;
   dontUseJustCheck = true;
@@ -41,22 +37,24 @@ rustPlatform.buildRustPackage {
     "--set"
     "prefix"
     (placeholder "out")
-
     "--set"
-    "bin-src"
-    "./target/${stdenv.hostPlatform.rust.cargoShortTarget}/release/cosmic-ext-applet-external-monitor-brightness"
+    "cargo-target-dir"
+    "target/${stdenv.hostPlatform.rust.cargoShortTarget}"
   ];
 
-  passthru.updateScript = nix-update-script { };
+  passthru.updateScript = nix-update-script {
+    extraArgs = [
+      "--version"
+      "branch=HEAD"
+    ];
+  };
 
   meta = {
-    homepage = "https://github.com/maciekk64/cosmic-ext-applet-external-monitor-brightness";
-    description = "Change brightness of external monitors via DDC/CI protocol and also quickly toggle COSMIC system dark mode";
+    description = "Applet to control the brightness of external monitors";
+    homepage = "https://github.com/cosmic-utils/cosmic-ext-applet-external-monitor-brightness";
     license = lib.licenses.gpl3Only;
-    maintainers = with lib.maintainers; [
-      # lilyinstarlight
-    ];
-    platforms = lib.platforms.linux;
     mainProgram = "cosmic-ext-applet-external-monitor-brightness";
+    maintainers = with lib.maintainers; [ HeitorAugustoLN ];
+    platforms = lib.platforms.linux;
   };
 }

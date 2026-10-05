@@ -1,40 +1,55 @@
 {
   lib,
-  fetchFromGitHub,
   stdenv,
+  fetchFromGitHub,
   wayland-scanner,
   nix-update-script,
+  nixosTests,
 }:
 
 stdenv.mkDerivation {
   pname = "cosmic-protocols";
-  version = "0-unstable-2025-03-21";
+  version = "0-unstable-2026-09-11-unstable-2026-10-05";
 
   src = fetchFromGitHub {
     owner = "pop-os";
     repo = "cosmic-protocols";
-    rev = "ee0d46f4b7e1508011a98225f14c4a0528ab2914";
-    hash = "sha256-oD9BYWX0uPpdsOYAyFq/pI6zxM0SfEb8lq9QA2yrBZY=";
+    rev = "c0cff4db14c37ed954983158e4055aa94c7741d9";
+    hash = "sha256-FL2YkCVrJ6JWUGMDg+jJJa51oar/PWDfgPgCyjcv6gk=";
   };
 
-  makeFlags = [ "PREFIX=${placeholder "out"}" ];
+  __structuredAttrs = true;
+  strictDeps = true;
+
   nativeBuildInputs = [ wayland-scanner ];
 
-  passthru.updateScript = nix-update-script {
-    # add if upstream ever makes a tag
-    #extraArgs = [ "--version-regex" "epoch-(.*)" ];
+  makeFlags = [ "PREFIX=${placeholder "out"}" ];
+
+  passthru = {
+    tests = {
+      inherit (nixosTests)
+        cosmic
+        cosmic-autologin
+        cosmic-noxwayland
+        cosmic-autologin-noxwayland
+        ;
+    };
+    updateScript = nix-update-script {
+      extraArgs = [
+        "--version"
+        "branch=HEAD"
+      ];
+    };
   };
 
   meta = {
     homepage = "https://github.com/pop-os/cosmic-protocols";
-    description = "Additional wayland-protocols used by the COSMIC Desktop Environment";
+    description = "Additional wayland-protocols used by the COSMIC desktop environment";
     license = with lib.licenses; [
       mit
       gpl3Only
     ];
-    maintainers = with lib.maintainers; [
-      # lilyinstarlight
-    ];
+    teams = [ lib.teams.cosmic ];
     platforms = lib.platforms.linux;
   };
 }

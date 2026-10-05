@@ -3,51 +3,56 @@
   stdenv,
   fetchFromGitHub,
   rustPlatform,
-  libcosmicAppHook,
   cmake,
-  cosmic-randr,
+  just,
+  libcosmicAppHook,
+  pkg-config,
   expat,
+  libinput,
   fontconfig,
   freetype,
-  just,
-  libinput,
+  isocodes,
   pipewire,
-  pkg-config,
   pulseaudio,
   udev,
-  util-linux,
+  dav1d,
+  pciutils,
+  desktop-file-utils,
+  cosmic-randr,
   xkeyboard_config,
   nix-update-script,
+  nixosTests,
 }:
-
 let
   libcosmicAppHook' = (libcosmicAppHook.__spliced.buildHost or libcosmicAppHook).override {
     includeSettings = false;
   };
 in
-
-rustPlatform.buildRustPackage {
+rustPlatform.buildRustPackage (finalAttrs: {
   pname = "cosmic-settings";
-  version = "1.0.0-alpha.6-unstable-2025-04-08";
+  version = "1.9.0-unstable-2026-10-05";
 
+  # nixpkgs-update: no auto update
   src = fetchFromGitHub {
     owner = "pop-os";
     repo = "cosmic-settings";
-    rev = "a19a19d24cee5748c60558ce83d1e7c6efc11e63";
-    hash = "sha256-G9Ie6VeJdvby3s5+D+zjeI0trYYBoUdLp+GKFFXF5qE=";
+    tag = "epoch-${finalAttrs.version}";
+    hash = "sha256-fL6/e8nwqk7zJeeFX8GtG1RE5VY03RbP9e3JBbXZBgc=";
   };
 
-  useFetchCargoVendor = true;
-  cargoHash = "sha256-7x1eAiH5czJnR3GTyyi4tOdySJy6QPXrV6pfcIZOa5k=";
+  cargoHash = "sha256-zk0XFCDyzliMyG40EEvgcEg0Qxkisw0dCWzlR1Tjh7I=";
+
+  separateDebugInfo = true;
+  __structuredAttrs = true;
 
   nativeBuildInputs = [
-    libcosmicAppHook'
-    rustPlatform.bindgenHook
     cmake
     just
+    libcosmicAppHook'
     pkg-config
-    util-linux
+    rustPlatform.bindgenHook
   ];
+
   buildInputs = [
     expat
     fontconfig
@@ -56,6 +61,9 @@ rustPlatform.buildRustPackage {
     pipewire
     pulseaudio
     udev
+    dav1d
+    pciutils
+    desktop-file-utils
   ];
 
   dontUseJustBuild = true;
@@ -66,31 +74,43 @@ rustPlatform.buildRustPackage {
     "prefix"
     (placeholder "out")
     "--set"
-    "bin-src"
-    "target/${stdenv.hostPlatform.rust.cargoShortTarget}/release/cosmic-settings"
+    "cargo-target-dir"
+    "target/${stdenv.hostPlatform.rust.cargoShortTarget}"
   ];
 
-  postInstall = ''
-    libcosmicAppWrapperArgs+=(--prefix PATH : ${lib.makeBinPath [ cosmic-randr ]})
-    libcosmicAppWrapperArgs+=(--set-default X11_BASE_RULES_XML ${xkeyboard_config}/share/X11/xkb/rules/base.xml)
-    libcosmicAppWrapperArgs+=(--set-default X11_EXTRA_RULES_XML ${xkeyboard_config}/share/X11/xkb/rules/base.extras.xml)
+  preFixup = ''
+    libcosmicAppWrapperArgs+=(
+      --prefix PATH : ${lib.makeBinPath [ cosmic-randr ]}
+      --prefix XDG_DATA_DIRS : ${lib.makeSearchPathOutput "bin" "share" [ isocodes ]}
+      --set-default X11_BASE_RULES_XML ${xkeyboard_config}/share/X11/xkb/rules/base.xml
+      --set-default X11_BASE_EXTRA_RULES_XML ${xkeyboard_config}/share/X11/xkb/rules/extra.xml
+    )
   '';
 
-  passthru.updateScript = nix-update-script {
-    extraArgs = [
-      "--version-regex"
-      "epoch-(.*)"
-    ];
+  passthru = {
+    tests = {
+      inherit (nixosTests)
+        cosmic
+        cosmic-autologin
+        cosmic-noxwayland
+        cosmic-autologin-noxwayland
+        ;
+    };
+
+    updateScript = nix-update-script {
+      extraArgs = [
+        "--version-regex"
+        "epoch-(.*)"
+      ];
+    };
   };
 
   meta = {
-    homepage = "https://github.com/pop-os/cosmic-settings";
     description = "Settings for the COSMIC Desktop Environment";
+    homepage = "https://github.com/pop-os/cosmic-settings";
     license = lib.licenses.gpl3Only;
-    maintainers = with lib.maintainers; [
-      # lilyinstarlight
-    ];
-    platforms = lib.platforms.linux;
     mainProgram = "cosmic-settings";
+    teams = [ lib.teams.cosmic ];
+    platforms = lib.platforms.linux;
   };
-}
+})
