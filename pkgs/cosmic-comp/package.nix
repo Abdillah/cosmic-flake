@@ -17,7 +17,7 @@
   nixosTests,
 
   useSystemd ? lib.meta.availableOn stdenv.hostPlatform systemd,
-  withXWayland ? true,
+  useXWayland ? true,
 }:
 
 rustPlatform.buildRustPackage (finalAttrs: {
@@ -67,7 +67,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
   # upstream pop-os/cosmic-comp#1976). Without it on PATH it logs
   # "`xrdb` not found, cannot update Xresources." and X11 clients fall back
   # to libXcursor's screen-derived default cursor size.
-  preFixup = lib.optionalString withXWayland ''
+  preFixup = lib.optionalString useXWayland ''
     libcosmicAppWrapperArgs+=(--prefix PATH : ${lib.makeBinPath [ xrdb ]})
   '';
 
