@@ -5,7 +5,7 @@
   fetchFromGitHub,
   libcosmicAppHook,
   pkg-config,
-  libdisplay-info_0_3,
+  libdisplay-info,
   libgbm,
   libinput,
   pixman,
@@ -46,7 +46,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
   ];
 
   buildInputs = [
-    libdisplay-info_0_3
+    libdisplay-info
     libgbm
     libinput
     pixman
