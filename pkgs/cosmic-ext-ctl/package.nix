@@ -22,6 +22,11 @@ rustPlatform.buildRustPackage (finalAttrs: {
   doInstallCheck = true;
   nativeInstallCheckInputs = [ versionCheckHook ];
   versionCheckProgram = "${placeholder "out"}/bin/cosmic-ctl";
+  # The update script uses `branch=HEAD`, so the derivation version becomes e.g.
+  # "1.6.0-unstable-2026-10-14", while the binary only reports "1.6.0".
+  preVersionCheck = ''
+    version="''${version%%-unstable-*}"
+  '';
 
   passthru.updateScript = nix-update-script { };
 
