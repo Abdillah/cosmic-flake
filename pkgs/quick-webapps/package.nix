@@ -17,12 +17,12 @@
 }:
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "quick-webapps";
-  version = "1.0.2-unstable-2026-10-05";
+  version = "1.0.2";
 
   src = fetchFromGitHub {
     owner = "cosmic-utils";
     repo = "web-apps";
-    tag = finalAttrs.version;
+    rev = "adff6f29260fb17ad63172eb7480d0337eccf6e2";
     hash = "sha256-yd4lALm7eG4NxrvaduZC1SZEE83j/nRsG2ufrfUMJJM=";
   };
 
@@ -39,7 +39,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
     openssl
   ];
 
-  env.VERGEN_GIT_SHA = finalAttrs.src.tag;
+  env.VERGEN_GIT_SHA = finalAttrs.src.rev;
 
   dontUseJustBuild = true;
   dontUseJustCheck = true;

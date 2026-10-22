@@ -14,12 +14,12 @@
 }:
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "cosmic-ext-tweaks";
-  version = "0.2.2-unstable-2026-10-05";
+  version = "0.2.2";
 
   src = fetchFromGitHub {
     owner = "cosmic-utils";
     repo = "tweaks";
-    tag = finalAttrs.version;
+    rev = "be293ca192715d682dd713cb8b627397107c5d18";
     hash = "sha256-kREYDT42Xh/APrZAs3uho6Mw2MNEGeG0jc00I2yQemI=";
   };
 
@@ -28,7 +28,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
   separateDebugInfo = true;
   __structuredAttrs = true;
 
-  env.VERGEN_GIT_SHA = finalAttrs.src.tag;
+  env.VERGEN_GIT_SHA = finalAttrs.src.rev;
 
   nativeBuildInputs = [
     libcosmicAppHook

@@ -30,13 +30,13 @@ let
 in
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "cosmic-settings";
-  version = "1.9.0-unstable-2026-10-05";
+  version = "1.9.0";
 
   # nixpkgs-update: no auto update
   src = fetchFromGitHub {
     owner = "pop-os";
     repo = "cosmic-settings";
-    tag = "epoch-${finalAttrs.version}";
+    rev = "7421ff0ab482c942eef23fbe9280edacfbeb35cc";
     hash = "sha256-fL6/e8nwqk7zJeeFX8GtG1RE5VY03RbP9e3JBbXZBgc=";
   };
 

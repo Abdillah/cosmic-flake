@@ -12,12 +12,12 @@
 }:
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "examine";
-  version = "2.0.0-unstable-2026-10-05";
+  version = "2.0.0";
 
   src = fetchFromGitHub {
     owner = "cosmic-utils";
     repo = "examine";
-    tag = finalAttrs.version;
+    rev = "5185b863e84c50b1aa9a08d74aacc612c532489e";
     hash = "sha256-6U8reOzeqamX/MG/mWbso+kjuZQ6cK8j9XhuEtGZ1q4=";
   };
 

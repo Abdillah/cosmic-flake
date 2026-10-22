@@ -12,12 +12,12 @@
 
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "pop-launcher";
-  version = "1.2.7-unstable-2026-10-05";
+  version = "1.2.7";
 
   src = fetchFromGitHub {
     owner = "pop-os";
     repo = "launcher";
-    tag = finalAttrs.version;
+    rev = "eead361cca44d8e19e988572462c49e26cf20427";
     hash = "sha256-Db3Lj1GuhoEP2iMwgEF8HnGAUkz0IIr3ZQWmNd1EaOY=";
   };
 
