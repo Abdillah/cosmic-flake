@@ -17,16 +17,16 @@
 }:
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "quick-webapps";
-  version = "1.0.2";
+  version = "3.0.0-unstable-2026-10-15";
 
   src = fetchFromGitHub {
     owner = "cosmic-utils";
     repo = "web-apps";
-    rev = "adff6f29260fb17ad63172eb7480d0337eccf6e2";
-    hash = "sha256-yd4lALm7eG4NxrvaduZC1SZEE83j/nRsG2ufrfUMJJM=";
+    rev = "6b0e3c206d8a69955b75efa175a617a74997fb9e";
+    hash = "sha256-0rmZuSGyOmBh8/Fi5v4/Ljk6mwuFlQd7M4ls2Qx2Lls=";
   };
 
-  cargoHash = "sha256-gg8WCzKbpFT8SRzMxC7ezvv+uN9IpIbGy/yytFC9uaM=";
+  cargoHash = "sha256-mKSUYLSPGIeOL50IkxcbQK0/Ol7APpFBgsQQ4LdFhHY=";
 
   nativeBuildInputs = [
     just
