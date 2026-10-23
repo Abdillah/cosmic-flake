@@ -6,6 +6,7 @@
   libcosmicAppHook,
   pkg-config,
   libdisplay-info,
+  just,
   libgbm,
   libinput,
   pixman,
@@ -43,6 +44,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
   nativeBuildInputs = [
     libcosmicAppHook
     pkg-config
+    just
   ];
 
   buildInputs = [
@@ -60,7 +62,29 @@ rustPlatform.buildRustPackage (finalAttrs: {
     "CARGO_TARGET_DIR=target/${stdenv.hostPlatform.rust.cargoShortTarget}"
   ];
 
+  justFlags = [
+    "--set"
+    "prefix"
+    (placeholder "out")
+    "--set"
+    "cargo-target-dir"
+    "target/${stdenv.hostPlatform.rust.cargoShortTarget}"
+  ];
+
   dontCargoInstall = true;
+  dontUseJustBuild = true;
+  dontUseJustCheck = true;
+
+  # 1.9.0 and earlier use a Makefile, newer versions use just.
+  installPhase = ''
+    runHook preInstall
+    if [[ -f justfile ]]; then
+      just "''${justFlags[@]}" install
+    else
+      make "''${makeFlags[@]}" install
+    fi
+    runHook postInstall
+  '';
 
   # With Xwayland, cosmic-comp calls out to `xrdb -merge` to set
   # `Xcursor.size` and `Xcursor.theme` for X11 clients (src/xwayland.rs,
