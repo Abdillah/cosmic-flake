@@ -7,6 +7,7 @@
   just,
   pkg-config,
   udev,
+  git,
   nix-update-script,
 }:
 rustPlatform.buildRustPackage {
@@ -26,6 +27,7 @@ rustPlatform.buildRustPackage {
     libcosmicAppHook
     just
     pkg-config
+    git
   ];
 
   buildInputs = [ udev ];
