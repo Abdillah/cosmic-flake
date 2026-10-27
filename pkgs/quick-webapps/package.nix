@@ -46,10 +46,10 @@ rustPlatform.buildRustPackage (finalAttrs: {
 
   justFlags = [
     "--set"
-    "prefix"
+    "PREFIX"
     (placeholder "out")
     "--set"
-    "bin-src"
+    "BIN_SRC"
     "target/${stdenv.hostPlatform.rust.cargoShortTarget}/release/quick-webapps"
   ];
 
