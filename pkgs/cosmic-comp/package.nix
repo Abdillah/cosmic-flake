@@ -6,6 +6,9 @@
   libcosmicAppHook,
   pkg-config,
   libdisplay-info,
+  # libdisplay-info-sys 0.3.x only accepts >= 0.1.0, < 0.4.0. Keep using the
+  # 0.3 release until cosmic-comp updates its bindings (nixpkgs does the same).
+  libdisplay-info_0_3 ? libdisplay-info,
   just,
   libgbm,
   libinput,
@@ -48,7 +51,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
   ];
 
   buildInputs = [
-    libdisplay-info
+    libdisplay-info_0_3
     libgbm
     libinput
     pixman
