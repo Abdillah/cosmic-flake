@@ -30,6 +30,14 @@ rustPlatform.buildRustPackage {
   dontUseJustBuild = true;
   dontUseJustCheck = true;
 
+  # fetchFromGitHub sources have no .git, so the justfile's
+  # `git rev-parse --short HEAD` backtick fails during installPhase.
+  postPatch = ''
+    substituteInPlace justfile \
+      --replace-fail 'export CLIPBOARD_MANAGER_COMMIT := `git rev-parse --short HEAD`' \
+        'export CLIPBOARD_MANAGER_COMMIT := "27a246f"'
+  '';
+
   justFlags = [
     "--set"
     "prefix"
