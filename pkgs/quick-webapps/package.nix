@@ -50,7 +50,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
     (placeholder "out")
     "--set"
     "BIN_SRC"
-    "target/${stdenv.hostPlatform.rust.cargoShortTarget}/release/quick-webapps"
+    "target/${stdenv.hostPlatform.rust.cargoShortTarget}/release/webapps"
   ];
 
   passthru.updateScript = nix-update-script { };
@@ -61,6 +61,6 @@ rustPlatform.buildRustPackage (finalAttrs: {
     license = lib.licenses.gpl3Only;
     platforms = lib.platforms.linux;
     maintainers = with lib.maintainers; [ pluiedev ];
-    mainProgram = "quick-webapps";
+    mainProgram = "dev.heppen.webapps";
   };
 })
