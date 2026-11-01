@@ -35,6 +35,14 @@ rustPlatform.buildRustPackage {
   dontUseJustBuild = true;
   dontUseJustCheck = true;
 
+  # fetchFromGitHub sources have no .git, so the justfile's
+  # `git rev-parse --short HEAD` backtick fails during installPhase.
+  postPatch = ''
+    substituteInPlace justfile \
+      --replace-fail 'export EXTERNAL_MONITOR_BRIGHTNESS_COMMIT := `git rev-parse --short HEAD`' \
+        'export EXTERNAL_MONITOR_BRIGHTNESS_COMMIT := "b068d5c"'
+  '';
+
   justFlags = [
     "--set"
     "prefix"
