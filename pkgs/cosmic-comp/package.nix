@@ -44,6 +44,12 @@ rustPlatform.buildRustPackage (finalAttrs: {
   separateDebugInfo = true;
   __structuredAttrs = true;
 
+  # Upstream sets `lto = "fat"`, which needs well over 10 GiB of RAM for the
+  # final rustc invocation and gets OOM-killed on typical aarch64 builders.
+  # Thin LTO keeps most of the cross-crate optimisation with a much smaller
+  # memory footprint.
+  env.CARGO_PROFILE_RELEASE_LTO = "thin";
+
   nativeBuildInputs = [
     libcosmicAppHook
     pkg-config
