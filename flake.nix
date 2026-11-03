@@ -1,4 +1,14 @@
 {
+  # Binary cache populated by .github/workflows/ci.yml. Using the same
+  # revisions means Nix can fetch the CI-built packages instead of rebuilding
+  # them locally.
+  nixConfig = {
+    extra-substituters = [ "https://cosmic-flake.cachix.org" ];
+    extra-trusted-public-keys = [
+      "cosmic-flake.cachix.org-1:tc/zvoz8Fe6CuoWMEAZqE17bHwsduyGK2mRmAgQYp74="
+    ];
+  };
+
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 

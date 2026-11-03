@@ -37,6 +37,15 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    # Use the binary cache populated by this repository's CI so packages built
+    # for the current revision can be substituted instead of rebuilt locally.
+    nix.settings = {
+      substituters = lib.mkAfter [ "https://cosmic-flake.cachix.org" ];
+      trusted-public-keys = lib.mkAfter [
+        "cosmic-flake.cachix.org-1:tc/zvoz8Fe6CuoWMEAZqE17bHwsduyGK2mRmAgQYp74="
+      ];
+    };
+
     # seed configuration in nixos-generate-config
     system.nixos-generate-config.desktopConfiguration = [
       ''
