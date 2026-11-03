@@ -6,23 +6,24 @@
   just,
   libcosmicAppHook,
   glib,
+  shared-mime-info,
   nix-update-script,
   nixosTests,
 }:
 
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "cosmic-files";
-  version = "1.11.0-unstable-2026-10-21";
+  version = "1.11.0-unstable-2026-11-02";
 
   # nixpkgs-update: no auto update
   src = fetchFromGitHub {
     owner = "pop-os";
     repo = "cosmic-files";
-    rev = "4efe802ede04b4e56d55727c54ab40d4e8777f4b";
-    hash = "sha256-DERVjEDpWz7UTCc0Y3QqMbA090pnaW3uYnV1TYKbYoM=";
+    rev = "e03001c8fc57e05260ba0b9d747daed78be6e5bc";
+    hash = "sha256-TAf2xZZeGC0tnesoqPHuRgEacgSUMuAJSIky0+oidis=";
   };
 
-  cargoHash = "sha256-yjgrbJn/QjWXlAI4Pqo4QdE5T2jmIP37ftURosguRYE=";
+  cargoHash = "sha256-+vaJqta1vtx117YXtGiRHqXARynAkRoGIcYpa/cEmtI=";
 
   separateDebugInfo = true;
   __structuredAttrs = true;
@@ -36,6 +37,14 @@ rustPlatform.buildRustPackage (finalAttrs: {
   ];
 
   buildInputs = [ glib ];
+
+  # xdg-mime needs the shared MIME database to identify archive files in the
+  # operation tests.
+  nativeCheckInputs = [ shared-mime-info ];
+
+  preCheck = ''
+    export XDG_DATA_DIRS="${shared-mime-info}/share''${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}"
+  '';
 
   dontUseJustBuild = true;
   dontUseJustCheck = true;
