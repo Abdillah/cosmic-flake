@@ -24,14 +24,14 @@
 
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "cosmic-greeter";
-  version = "1.11.0-unstable-2026-10-20";
+  version = "1.11.0-unstable-2026-11-06";
 
   # nixpkgs-update: no auto update
   src = fetchFromGitHub {
     owner = "pop-os";
     repo = "cosmic-greeter";
-    rev = "b7b59d487ecdbe97b7e317cc57b8e21015072f29";
-    hash = "sha256-0JJE7ho84M+sy+gFYQW6wfvpuBt7RQTfsjAhty9Zhfk=";
+    rev = "f7be8f2965f81cca1c5c98a6c685d39afe7dfce0";
+    hash = "sha256-9540qNA8R9gsvxVng9PrUrKflQyUbF5Uwbw1wMrZvvQ=";
   };
 
   postPatch = ''
@@ -39,7 +39,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
     substituteInPlace src/greeter.rs --replace-fail '/usr/bin/orca' '${lib.getExe orca}'
   '';
 
-  cargoHash = "sha256-SolJzpwXhtziALioyBJt6lhLpiwLN2VnepYCSPxvYyQ=";
+  cargoHash = "sha256-UaWYEKyKxle/p+6MlxyVBzHRXo0uJfFOEb5p5uDOO90=";
 
   buildNoDefaultFeatures = true;
 

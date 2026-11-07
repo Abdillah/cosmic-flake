@@ -26,17 +26,17 @@
 
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "cosmic-comp";
-  version = "1.11.0-unstable-2026-10-26";
+  version = "1.11.0-unstable-2026-11-06";
 
   # nixpkgs-update: no auto update
   src = fetchFromGitHub {
     owner = "pop-os";
     repo = "cosmic-comp";
-    rev = "2c3014090952a0c876a369822571ea86fffb22e7";
-    hash = "sha256-2VO21+gfKQCONxTaProTncPr7l13Xa5+SuzXGbMs52Y=";
+    rev = "46b26e63ca22a7acb27adf0c4708ba62a48d356d";
+    hash = "sha256-kL7uSize4mmRQragB455BAlHe9KZfVVYFaZkn2Kzthw=";
   };
 
-  cargoHash = "sha256-yk9iEW++pQejp3O7BVDEynCPtCH4FO6wF1sGHt6lWoU=";
+  cargoHash = "sha256-gOBPPYHu2x5TRu7O6Jr7yiSbEIGA3sZ9p/e/A240wbQ=";
 
   # Only default feature is systemd
   buildNoDefaultFeatures = !useSystemd;
