@@ -18,17 +18,21 @@
 
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "xdg-desktop-portal-cosmic";
-  version = "1.11.0-unstable-2026-10-20";
+  version = "1.11.0-unstable-2026-11-07";
 
   # nixpkgs-update: no auto update
   src = fetchFromGitHub {
     owner = "pop-os";
     repo = "xdg-desktop-portal-cosmic";
-    rev = "f448ddfb296bf7bb23517b24b2f532559a334a1c";
-    hash = "sha256-UVrfUbUJ7wog8EkTrROKQaVeJkkhqLmKy8CT1NW+g/M=";
+    rev = "f25d7717e7b8fa8d7757659855e39948cbff88e5";
+    hash = "sha256-AcaB7CQuus43vZs7ved05ZlybK92FR2CltLrcqKgpso=";
   };
 
-  cargoHash = "sha256-/ftXuX3N1wwmhSCmpJd2Ei/quH5AucOKsTbGGI4NQx8=";
+  # kstring 2.0.5 requires rustc 1.96, but the stable nixpkgs toolchain is
+  # still 1.95. Pin it to the last release compatible with that toolchain.
+  cargoPatches = [ ./kstring-2.0.2.patch ];
+
+  cargoHash = "sha256-9lp9/LmqezlDzqsscEemd5IjWRZOX+k2bqT9DwhIBnM=";
 
   separateDebugInfo = true;
 
