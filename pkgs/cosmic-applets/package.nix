@@ -21,17 +21,17 @@
 
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "cosmic-applets";
-  version = "1.11.0-unstable-2026-10-21";
+  version = "1.11.0-unstable-2026-11-12";
 
   # nixpkgs-update: no auto update
   src = fetchFromGitHub {
     owner = "pop-os";
     repo = "cosmic-applets";
-    rev = "dc252e34fd368a63981633075194e52b3f794f9a";
-    hash = "sha256-vwqXDteLbfVP37JGYXl+khqTdFZX+GqwOnRw4n2WfOE=";
+    rev = "ecb6b61986f90130a8f7bef8b3d414de0fb91916";
+    hash = "sha256-T1NWx7xrQekbGy16g/9xMf3bBBH22T+KEdsWtGY7ag0=";
   };
 
-  cargoHash = "sha256-/+ozs3YJEMdPdvOJumufX6/jGCq9N5W8H01Ridn5hfU=";
+  cargoHash = "sha256-8KgAt3HrdVnjTjzzQ+4L5oD2HOuCqNHiII5I2wfgUuE=";
 
   separateDebugInfo = true;
   __structuredAttrs = true;
