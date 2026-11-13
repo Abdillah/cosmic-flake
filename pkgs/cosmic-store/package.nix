@@ -15,17 +15,17 @@
 
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "cosmic-store";
-  version = "1.11.0-unstable-2026-10-27";
+  version = "1.11.0-unstable-2026-11-11";
 
   # nixpkgs-update: no auto update
   src = fetchFromGitHub {
     owner = "pop-os";
     repo = "cosmic-store";
-    rev = "bb24819c25de982f66bc736c029af8303b5c29c4";
-    hash = "sha256-qMjHwo3N/+Rblq/zuiv0Wa52kb09MIrHboGZ4hYbWWg=";
+    rev = "377ed6b88a91fd86761cd15dccfa70073a1a01be";
+    hash = "sha256-lhcCvw+PecS5IiqzJLSElJpa9sqthBblJ8QlyYJAyIY=";
   };
 
-  cargoHash = "sha256-1/RVp17C2dRbPjc/BkAUrzjhFqyOL3p3+Ol0Mte3vfI=";
+  cargoHash = "sha256-aEyDKIfHjYae/8ihV5sjScCa0rpOm8Poa6Vl8DWfu1c=";
 
   separateDebugInfo = true;
   __structuredAttrs = true;
