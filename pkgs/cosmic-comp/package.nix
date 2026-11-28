@@ -26,7 +26,7 @@
 
 rustPlatform.buildRustPackage (finalAttrs: {
   pname = "cosmic-comp";
-  version = "1.11.0-unstable-2026-11-20";
+  version = "1.12.0-unstable-2026-11-20";
 
   # nixpkgs-update: no auto update
   src = fetchFromGitHub {
